@@ -33,14 +33,14 @@ class Config:
 
 
 class DevelopmentConfig(Config):
-    SECRET_KEY: SecretStr = SecretStr("dev-key")
+    JWT_KEY: SecretStr = SecretStr("dev-key")
     DATABASE_URL: str = os.environ.get("DEV_DATABASE_URL", "sqlite:///./dev_bet.db")
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 class TestingConfig(Config):
-    SECRET_KEY = SecretStr("test-key")
+    JWT_KEY = SecretStr("test-key")
     DATABASE_URL: str = os.environ.get("TEST_DATABASE_URL", "sqlite:///./test_bet.db")
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
