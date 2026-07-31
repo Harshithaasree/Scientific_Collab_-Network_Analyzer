@@ -1,4 +1,4 @@
-from core import Base
+from core import PASSWORD_MAX_LENGTH, USERNAME_MAX_LENGTH, Base
 from pwdlib import PasswordHash
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -10,8 +10,10 @@ class User(Base):
     __tablename__: str = "users"
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    password: Mapped[str] = mapped_column(String, nullable=False)
-    user_name: Mapped[str | None] = mapped_column(String, nullable=True, default=None)
+    password: Mapped[str] = mapped_column(String(PASSWORD_MAX_LENGTH), nullable=False)
+    user_name: Mapped[str | None] = mapped_column(
+        String(USERNAME_MAX_LENGTH), nullable=True, default=None
+    )
 
     def __init__(self, email: str, password: str, user_name: str | None = None) -> None:
         self.email = email
