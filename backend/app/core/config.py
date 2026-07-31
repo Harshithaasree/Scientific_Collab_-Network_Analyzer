@@ -5,11 +5,14 @@ from pydantic import SecretStr
 
 load_dotenv()
 
+
 class Config:
     JWT_KEY = SecretStr(os.environ.get("JWT_KEY", ""))
     DATABASE_URL: str = os.environ.get("DATABASE_URL", "")
     ALGORITHM: str = os.environ.get("ALGORITHM", "HS256")
     ACCESS_TOKEN_TIME_MINUTES = int(os.environ.get("ACCESS_TOKEN_TIME_MINUTES", "0"))
+    DEBUG = False
+    TESTING = False
 
     @classmethod
     def validate(cls) -> None:
@@ -34,20 +37,23 @@ class Config:
 
 class DevelopmentConfig(Config):
     JWT_KEY: SecretStr = SecretStr("dev-key")
-    DATABASE_URL: str = os.environ.get("DEV_DATABASE_URL", "sqlite:///./dev_bet.db")
+    DATABASE_URL: str = os.environ.get("DEV_DATABASE_URL", "sqlite+aiosqlite:///database/dev.db")
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
+    DEBUG = True
 
 
 class TestingConfig(Config):
     JWT_KEY = SecretStr("test-key")
-    DATABASE_URL: str = os.environ.get("TEST_DATABASE_URL", "sqlite:///./test_bet.db")
+    DATABASE_URL: str = os.environ.get("TEST_DATABASE_URL", "sqlite+aiosqlite:///database/test.db")
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30
+    TESTING = True
 
 
 class ProductionConfig(Config):
-    pass
+    DEBUG = False
+    TESTING = False
 
 
 config: dict[str, type[Config]] = {
