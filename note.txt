@@ -1,0 +1,2 @@
+ 1. Refresh token goes in an httpOnly cookie, never in localStorage. 
+    localStorage is accessible by JavaScript which means XSS attacks can steal it.
