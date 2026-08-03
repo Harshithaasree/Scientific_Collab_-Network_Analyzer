@@ -1,9 +1,9 @@
-from core import PASSWORD_MAX_LENGTH, USERNAME_MAX_LENGTH, Base
-from pwdlib import PasswordHash
+from core import Base
+from core.constants import PASSWORD_MAX_LENGTH, USERNAME_MAX_LENGTH
+from core.security import hash_password, verify_password
+from pydantic import SecretStr
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
-
-pwd_context: PasswordHash = PasswordHash.recommended()
 
 
 class User(Base):
@@ -15,13 +15,15 @@ class User(Base):
         String(USERNAME_MAX_LENGTH), nullable=True, default=None
     )
 
-    def __init__(self, email: str, password: str, user_name: str | None = None) -> None:
+    def __init__(
+        self, email: str, password: SecretStr, user_name: str | None = None
+    ) -> None:
         self.email = email
-        self.password = pwd_context.hash(password)
+        self.password = hash_password(password)
         self.user_name = user_name
 
     def check_password(self, plain_password) -> bool:
-        return pwd_context.verify(plain_password, self.password)
+        return verify_password(plain_password, self.password)
 
     def __repr__(self) -> str:
         return f"<User(email={self.email}, name={self.user_name})>"
