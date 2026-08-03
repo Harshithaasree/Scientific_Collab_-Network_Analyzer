@@ -11,7 +11,7 @@ configure: type[Config] = get_config()
 engine: AsyncEngine = create_async_engine(
     url=configure.DATABASE_URL,
     echo=configure.DEBUG,
-    configure={"check_same_thread": False}
+    connect_args={"check_same_thread": False}
     if "sqlite" in configure.DATABASE_URL
     else {},
 )
