@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -5,6 +6,8 @@ from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.orm import DeclarativeBase
 
 from .config import Config, get_config
+
+logger: logging.Logger = logging.getLogger(__name__)
 
 configure: type[Config] = get_config()
 
@@ -25,8 +28,10 @@ class Base(DeclarativeBase):
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    logger.debug("opening database session")
     async with session() as db:
         try:
             yield db
         finally:
+            logger.debug("closing database session")
             await db.close()
