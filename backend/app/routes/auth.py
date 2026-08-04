@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from models import User
 from schemas import RefreshRequest, TokenResponse, UserRequest
 
-from .deps import AuthServiceDeps, UserServiceDeps
+from .deps import AuthServiceDeps, DBSession, UserServiceDeps
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -26,10 +26,18 @@ async def login(
     return await auth_service.login(credentials, user_service)
 
 
+@auth_router.post("/logout", status_code=204)
+async def logout(
+    body: RefreshRequest, auth_service: AuthServiceDeps, session: DBSession
+) -> None:
+    return await auth_service.logout(body.refresh_token, session)
+
+
 @auth_router.post("/refresh")
 async def refresh_token(
     body: RefreshRequest,
     user_service: UserServiceDeps,
     auth_service: AuthServiceDeps,
+    session: DBSession,
 ) -> TokenResponse:
-    return await auth_service.refresh(body.refresh_token, user_service)
+    return await auth_service.refresh(body.refresh_token, user_service, session)
