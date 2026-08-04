@@ -3,7 +3,7 @@ from schemas import UserResponse, UserUpdateRequest
 
 from .deps import CurrentUser, UserServiceDeps
 
-user_router = APIRouter(prefix="/user", tags=["user"])
+user_router = APIRouter(prefix="/users", tags=["users"])
 
 
 @user_router.patch("/me")
