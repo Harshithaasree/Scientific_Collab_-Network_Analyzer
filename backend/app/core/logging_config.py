@@ -36,3 +36,15 @@ logging.basicConfig(
     format=FORMAT,
     handlers=[file_handler, console_handler],
 )
+
+logging.getLogger("watchfiles").setLevel(logging.WARNING)
+logging.getLogger("watchfiles.main").setLevel(logging.WARNING)
+logging.getLogger("granian").setLevel(logging.WARNING)
+logging.getLogger("granian.access").setLevel(logging.WARNING)
+logging.getLogger("aiosqlite").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)
+logging.getLogger("sqlalchemy.dialects").setLevel(logging.WARNING)
+logging.getLogger("asyncpg").setLevel(logging.WARNING)  # PostgreSQL
+logging.getLogger("aiopg").setLevel(logging.WARNING)  # another PostgreSQL driver
+logging.getLogger("aiomysql").setLevel(logging.WARNING)  # MySQL if ever needed
