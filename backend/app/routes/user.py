@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from schemas import UserResponse, UserUpdateRequest
+from app.schemas import UserResponse, UserUpdateRequest
 
 from .deps import CurrentUser, UserServiceDeps
 

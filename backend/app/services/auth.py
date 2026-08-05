@@ -1,72 +1,131 @@
-import logging
-
-from core.constants import TokenType
 from fastapi import HTTPException
-from models import RevokedToken, User
-from schemas import TokenPayload, TokenResponse, UserRequest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .token import TokenService
-from .user import UserService
-
-logger: logging.Logger = logging.getLogger(__name__)
+from app.models import RevokedToken, User
+from app.schemas import TokenResponse, UserRequest
+from app.services.token import TokenService
+from app.services.user import UserService
 
 
 class AuthService:
     def __init__(self, token_service: TokenService) -> None:
-        self.token_service: TokenService = token_service
+        self.token_service = token_service
+
+    def login_registered_user(
+        self,
+        user: User,
+    ) -> TokenResponse:
+
+        access_token = self.token_service.create_access_token(
+            user.email
+        )
+
+        refresh_token = self.token_service.create_refresh_token(
+            user.email
+        )
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+        )
 
     async def login(
-        self, credentials: UserRequest, user_service: UserService
+        self,
+        credentials: UserRequest,
+        user_service: UserService,
     ) -> TokenResponse:
-        logger.info("login attemp: %s", credentials.email)
-        user: User | None = await user_service.get_user_by_email(credentials.email)
-        if not user or not user.check_password(credentials.password):
-            logger.warning("login failed, invalid credentials: %s", credentials.email)
-            raise HTTPException(status_code=401, detail="invalid credentials")
 
-        logger.info("login successful: %s", credentials.email)
-        return TokenResponse(
-            access_token=self.token_service.create_access_token(user.email),
-            refresh_token=self.token_service.create_refresh_token(user.email),
-            token_type=TokenType.BEARER,
+        user = await user_service.get_user_by_email(
+            str(credentials.email)
         )
 
-    def login_registered_user(self, user: User) -> TokenResponse:
-        return TokenResponse(
-            access_token=self.token_service.create_access_token(user.email),
-            refresh_token=self.token_service.create_refresh_token(user.email),
-            token_type=TokenType.BEARER,
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail="invalid email or password",
+            )
+
+        if not user.check_password(
+            credentials.password
+        ):
+            raise HTTPException(
+                status_code=401,
+                detail="invalid email or password",
+            )
+
+        return self.login_registered_user(user)
+
+    async def logout(
+        self,
+        refresh_token: str,
+        session: AsyncSession,
+    ) -> None:
+
+        payload = self.token_service.decode_token(
+            refresh_token
         )
 
-    async def logout(self, refresh_token: str, session: AsyncSession) -> None:
-        blacklisted = RevokedToken(token=refresh_token)
-        session.add(blacklisted)
-        await session.commit()
+        if payload.token_type != "refresh":
+            raise HTTPException(
+                status_code=400,
+                detail="invalid refresh token",
+            )
 
-    async def is_revoked(self, refresh_token: str, session: AsyncSession) -> bool:
-        result: RevokedToken | None = await session.scalar(
-            select(RevokedToken).where(RevokedToken.token == refresh_token)
+        existing = await session.scalar(
+            select(RevokedToken).where(
+                RevokedToken.token == refresh_token
+            )
         )
-        return result is not None
+
+        if not existing:
+            session.add(
+                RevokedToken(
+                    token=refresh_token
+                )
+            )
+
+            await session.commit()
 
     async def refresh(
-        self, refresh_token: str, user_service: UserService, session: AsyncSession
+        self,
+        refresh_token: str,
+        user_service: UserService,
+        session: AsyncSession,
     ) -> TokenResponse:
-        if await self.is_revoked(refresh_token, session):
-            raise HTTPException(status_code=401, detail="token has be revoked")
 
-        payload: TokenPayload = self.token_service.decode_token(refresh_token)
-        if payload.token_type != TokenType.REFRESH:
-            raise HTTPException(status_code=401, detail="invalid token type")
-        if not payload.sub:
-            raise HTTPException(status_code=401, detail="invalid token payload")
-
-        user: User | None = await user_service.get_user_by_email(payload.sub)
-        if not user:
-            raise HTTPException(status_code=404, detail="user not found")
-        return TokenResponse(
-            access_token=self.token_service.create_access_token(payload.sub),
-            token_type=TokenType.BEARER,
+        payload = self.token_service.decode_token(
+            refresh_token
         )
+
+        if payload.token_type != "refresh":
+            raise HTTPException(
+                status_code=400,
+                detail="invalid refresh token",
+            )
+
+        revoked = await session.scalar(
+            select(RevokedToken).where(
+                RevokedToken.token == refresh_token
+            )
+        )
+
+        if revoked:
+            raise HTTPException(
+                status_code=401,
+                detail="refresh token has been revoked",
+            )
+
+        user = await user_service.get_user_by_email(
+            payload.sub
+        )
+
+        if not user:
+            raise HTTPException(
+                status_code=401,
+                detail="user not found",
+            )
+
+        return self.login_registered_user(user)
+
