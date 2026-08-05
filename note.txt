@@ -1,2 +1,33 @@
  1. Refresh token goes in an httpOnly cookie, never in localStorage. 
     localStorage is accessible by JavaScript which means XSS attacks can steal it.
+
+ 2. Download asyncpg to connect asynchronous backend database operations with postgresql.
+
+
+Researcher
+├── create and manage their own profile
+├── upload and manage publications
+├── create and join research projects
+├── register for conferences
+├── track citations
+└── view collaboration network
+
+Institution Admin
+├── manage their institution's profile
+├── view all researchers in their institution
+├── view institution's publications and projects
+├── generate institution reports
+└── manage departments
+
+Reviewer
+├── review submitted publications
+├── add review comments
+├── approve or reject publications
+└── view assigned publications only
+
+System Admin
+├── manage all users and roles
+├── view all institutions
+├── generate platform-wide reports
+├── manage conferences
+└── full access to everything
