@@ -27,9 +27,6 @@ class UserService:
         logger.info("user registered successfully: %s", credentials.email)
         return new_user
 
-    async def get_user_by_email(self, email: str) -> User | None:
-        return await self.session.scalar(select(User).where(User.email == email))
-
     async def update(self, credentials: UserUpdateRequest, user: User) -> UserResponse:
         logger.info("updating user: %s", user.email)
         updates = credentials.model_dump(exclude_none=True)
@@ -47,3 +44,15 @@ class UserService:
         await self.session.delete(user)
         await self.session.commit()
         logger.warning("user deleted: %s", user.email)
+
+    async def delete_by_id(self, user_id: int) -> None:
+        logger.info("deleting user by id: %d", user_id)
+        user: User | None = await self.session.get(User, user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="user not found")
+        await self.session.delete(user)
+        await self.session.commit()
+        logger.warning("user deleted: %d", user_id)
+
+    async def get_user_by_email(self, email: str) -> User | None:
+        return await self.session.scalar(select(User).where(User.email == email))
