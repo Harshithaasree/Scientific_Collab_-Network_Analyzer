@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from schemas import UserResponse, UserUpdateRequest
 
-from .deps import CurrentUser, UserServiceDeps
+from .deps import AdminUser, CurrentUser, UserServiceDeps
 
 user_router = APIRouter(prefix="/users", tags=["users"])
 
@@ -21,3 +21,10 @@ async def delete_me(
     user_service: UserServiceDeps,
 ) -> None:
     await user_service.delete(current_user)
+
+
+@user_router.delete("/{user_id}", status_code=204)
+async def delete_user(
+    user_id: int, adim: AdminUser, user_service: UserServiceDeps
+) -> None:
+    await user_service.delete_by_id(user_id)

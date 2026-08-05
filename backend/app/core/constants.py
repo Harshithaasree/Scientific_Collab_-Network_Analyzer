@@ -1,3 +1,4 @@
+from enum import StrEnum
 from typing import Final
 
 PASSWORD_MIN_LENGTH: Final[int] = 8
@@ -26,3 +27,10 @@ class TokenType:
     ACCESS: Final[str] = "access"
     REFRESH: Final[str] = "refresh"
     BEARER: Final[str] = "bearer"
+
+
+class UserRole(StrEnum):
+    RESEARCHER = "researcher"
+    INSTITUTION_ADMIN = "institution_admin"
+    REVIEWER = "reviewer"
+    SYSTEM_ADMIN = "system_admin"

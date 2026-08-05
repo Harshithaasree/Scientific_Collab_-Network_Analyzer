@@ -1,3 +1,4 @@
+from .researcher import ResearcherRequest, ResearcherResponse, ResearcherUpdateRequest
 from .user import (
     RefreshRequest,
     TokenPayload,
@@ -9,6 +10,9 @@ from .user import (
 
 __all__: list[str] = [
     "RefreshRequest",
+    "ResearcherRequest",
+    "ResearcherResponse",
+    "ResearcherUpdateRequest",
     "TokenPayload",
     "TokenResponse",
     "UserRequest",

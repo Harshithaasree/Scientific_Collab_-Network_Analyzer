@@ -1,11 +1,12 @@
 from typing import Annotated
 
 from core import Config, get_config, get_db
+from core.constants import UserRole
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from models import User
 from schemas import TokenPayload
-from services import AuthService, TokenService, UserService
+from services import AuthService, ResearcherService, TokenService, UserService
 from sqlalchemy.ext.asyncio import AsyncSession
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -29,6 +30,10 @@ def get_auth_service() -> AuthService:
     return AuthService(get_token_service())
 
 
+def get_researcher_service(session: DBSession) -> ResearcherService:
+    return ResearcherService(session)
+
+
 # Auth guard
 async def get_current_user(token: Token, session: DBSession) -> User:
     token_service: TokenService = get_token_service()
@@ -42,7 +47,24 @@ async def get_current_user(token: Token, session: DBSession) -> User:
     return user
 
 
+def require_role(*roles: UserRole):
+    async def checker(current_user: CurrentUser) -> User:
+        if current_user.role not in roles:
+            raise HTTPException(status_code=403, detail="insufficient permissions")
+        return current_user
+
+    return checker
+
+
 # Annotated shortcuts for routes
 AuthServiceDeps = Annotated[AuthService, Depends(get_auth_service)]
 UserServiceDeps = Annotated[UserService, Depends(get_user_service)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
+ResearcherServiceDeps = Annotated[ResearcherService, Depends(get_researcher_service)]
+AdminUser = Annotated[User, Depends(require_role(UserRole.SYSTEM_ADMIN))]
+InstitutionAdminUser = Annotated[
+    User, Depends(require_role(UserRole.SYSTEM_ADMIN, UserRole.INSTITUTION_ADMIN))
+]
+ReviewerUser = Annotated[
+    User, Depends(require_role(UserRole.REVIEWER, UserRole.SYSTEM_ADMIN))
+]

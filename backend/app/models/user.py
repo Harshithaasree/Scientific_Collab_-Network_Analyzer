@@ -3,14 +3,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from core import Base
-from core.constants import PASSWORD_MAX_LENGTH
+from core.constants import PASSWORD_MAX_LENGTH, UserRole
 from core.security import hash_password, verify_password
 from pydantic import SecretStr
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-# if TYPE_CHECKING:
-    # from .researcher import Researcher
+if TYPE_CHECKING:
+    from .researcher import Researcher
 
 
 class User(Base):
@@ -18,13 +18,19 @@ class User(Base):
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     password: Mapped[str] = mapped_column(String(PASSWORD_MAX_LENGTH), nullable=False)
-    # researcher: Mapped[Researcher | None] = relationship(
-    #     "Researcher", back_populates="user", uselist=False
-    # )
+    role: Mapped[str] = mapped_column(
+        String, default=UserRole.RESEARCHER, nullable=False
+    )
+    researcher: Mapped[Researcher | None] = relationship(
+        "Researcher", back_populates="user", uselist=False
+    )
 
-    def __init__(self, email: str, password: SecretStr) -> None:
+    def __init__(
+        self, email: str, password: SecretStr, role: UserRole = UserRole.RESEARCHER
+    ) -> None:
         self.email = email
         self.password = hash_password(password)
+        self.role = role
 
     def check_password(self, plain_password) -> bool:
         return verify_password(plain_password, self.password)
